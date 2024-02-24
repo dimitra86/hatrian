@@ -1,62 +1,53 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
-const FileManagerPlugin = require('filemanager-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
 
 module.exports = {
-  entry: path.join(__dirname, 'src', 'index.js'),
+  entry: './src/index.ts',
   output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'index.[contenthash].js',
-    assetModuleFilename: path.join('assets/images', '[name].[ext]'),
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
+    assetModuleFilename: 'assets/[hash][ext]',
   },
   module: {
-    rules: [
+    rules:[
       {
-        test: /\.js$/,
-        use: 'babel-loader',
+        test: /\.[tj]s$/,
+        use: 'ts-loader',
         exclude: /node_modules/,
       },
       {
-        test: /\.(scss|css)$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
-      },
-      {
-        test: /\.(png|jpg|jpeg|gif)$/i,
+        test: /\.(?:ico|gif|png|jpg|jpeg|svg)$/i,
         type: 'asset/resource',
       },
       {
-        test: /\.svg$/,
+        test: /\.(woff(2)?|eot|ttf|otf)$/i,
         type: 'asset/resource',
-        generator: {
-          filename: path.join('icons', '[name].[contenthash][ext]'),
-        },
       },
-    ],
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+      {
+        test: /\.s[ac]ss$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'src', 'index.html'),
-      filename: 'index.html',
+    new MiniCssExtractPlugin({ filename: '[name].[contenthash].css' }),
+    new HtmlWebpackPlugin({ template: './src/index.html' }),
+    new CopyPlugin({
+      patterns: [{
+        from: 'public',
+        noErrorOnMissing: true,
+      }],
     }),
-    new FileManagerPlugin({
-      events: {
-        onStart: {
-          delete: ['dist'],
-        },
-      },
-    }),
-    new MiniCssExtractPlugin({
-      filename: 'style.[contenthash].css',
-    }),
-    new FaviconsWebpackPlugin({
-      logo: "./src/assets/images/dogIco.png"
-    }),
+    new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
   ],
-
-  devServer: {
-    watchFiles: path.join(__dirname, 'src'),
-    port: 9000,
-  },
 };
