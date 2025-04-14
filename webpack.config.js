@@ -7,33 +7,44 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   entry: './src/index.ts',
   output: {
-    path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
-    assetModuleFilename: 'assets/[hash][ext]',
+    path: path.resolve(__dirname, 'dist'),
+    clean:true
   },
   module: {
-    rules:[
+    rules: [
+      // all files with a `.ts`, `.cts`, `.mts` or `.tsx` extension will be handled by `ts-loader`
+      { test: /\.([cm]?ts|tsx)$/, loader: "ts-loader" },
       {
-        test: /\.[tj]s$/,
-        use: 'ts-loader',
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-      },
-      {
-        test: /\.(?:ico|gif|png|jpg|jpeg|svg)$/i,
-        type: 'asset/resource',
-      },
-      {
-        test: /\.(woff(2)?|eot|ttf|otf)$/i,
-        type: 'asset/resource',
-      },
-      {
-        test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
-      },
-      {
-        test: /\.s[ac]ss$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+        use: "babel-loader"
+    },
+    {
+        test: /\css$/,
+        use: [
+            {
+                loader: "style-loader"
+            },
+            {
+                loader: "css-loader"
+            }
+        ]
+    },
+    {
+      test: /\.s[ac]ss$/i,
+      use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+    },
+    {
+      test: /\.m?js$/,
+      exclude: /node_modules/,
+      use: {
+        loader: "babel-loader",
+        options: {
+          presets: ['@babel/preset-env']
+        }
       }
+    }
     ]
   },
   resolve: {
@@ -44,7 +55,7 @@ module.exports = {
     new HtmlWebpackPlugin({ template: './src/index.html' }),
     new CopyPlugin({
       patterns: [{
-        from: 'public',
+        from: "./src/assets", to: "./assets",
         noErrorOnMissing: true,
       }],
     }),
