@@ -1,90 +1,80 @@
 import "./style.scss";
 
 function numberToWords(num: number): string {
-  // Функция для преобразования чисел в текст (для упрощения)
-  const units = [
-    "",
-    "один",
-    "два",
-    "три",
-    "четыре",
-    "пять",
-    "шесть",
-    "семь",
-    "восемь",
-    "девять",
-    "десять",
-    "одиннадцать",
-    "двенадцать",
-    "тринадцать",
-    "четырнадцать",
-    "пятнадцать",
-    "шестнадцать",
-    "семнадцать",
-    "восемнадцать",
-    "девятнадцать",
-  ];
-  const tens = [
-    "",
-    "",
-    "двадцать",
-    "тридцать",
-    "сорок",
-    "пятьдесят",
-    "шестьдесят",
-    "семьдесят",
-    "восемьдесят",
-    "девяносто",
-  ];
-  const hundreds = [
-    "",
-    "сто",
-    "двести",
-    "триста",
-    "четыреста",
-    "пятьсот",
-    "шестьсот",
-    "семьсот",
-    "восемьсот",
-    "девятьсот",
-  ];
-  const thousands = ["", "тысяча", "миллион", "миллиард"];
-
+  if (!Number.isFinite(num)) throw new Error("Input must be a finite number");
+  num = Math.floor(Math.abs(num));
   if (num === 0) return "ноль";
 
-  let words = "";
-  let groupIndex = 0;
+  const units = [
+    "", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять",
+    "десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать",
+    "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"
+  ];
+  const tens = ["", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"];
+  const hundreds = ["", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот"];
 
-  while (num > 0) {
-    let group = num % 1000;
-    num = Math.floor(num / 1000);
+  // формы для классов (тысячи, миллионы, миллиарды, ...)
+  // каждая запись: [forms for 1, 2-4, 5-0], gender ('m' или 'f')
+  const classes: Array<[string, string, string, "m" | "f"]> = [
+    ["", "", "", "m"], // единицы
+    ["тысяча", "тысячи", "тысяч", "f"],
+    ["миллион", "миллиона", "миллионов", "m"],
+    ["миллиард", "миллиарда", "миллиардов", "m"],
+    ["триллион", "триллиона", "триллионов", "m"]
+  ];
 
-    if (group > 0) {
-      let groupWords = "";
-      if (group > 99) {
-        groupWords += hundreds[Math.floor(group / 100)];
-        group %= 100;
-      }
-      if (group > 19) {
-        groupWords += (groupWords ? " " : "") + tens[Math.floor(group / 10)];
-        group %= 10;
-      }
-      if (group > 0) {
-        groupWords += (groupWords ? " " : "") + units[group];
-      }
-
-      if (groupIndex > 0) {
-        groupWords += " " + thousands[groupIndex];
-      }
-
-      words = groupWords + (words ? " " : "") + words;
-    }
-
-    groupIndex++;
+  function classForm(n: number, forms: [string, string, string, "m" | "f"]): string {
+    if (!forms[0]) return "";
+    const lastTwo = n % 100;
+    const last = n % 10;
+    if (lastTwo >= 11 && lastTwo <= 19) return forms[2];
+    if (last === 1) return forms[0];
+    if (last >= 2 && last <= 4) return forms[1];
+    return forms[2];
   }
 
-  return words.trim();
+  function threeDigitsToWords(n: number, gender: "m" | "f"): string {
+    let out: string[] = [];
+    const h = Math.floor(n / 100);
+    const t = Math.floor((n % 100) / 10);
+    const u = n % 10;
+    if (h) out.push(hundreds[h]);
+    const lastTwo = n % 100;
+    if (lastTwo > 0 && lastTwo < 20) {
+      // особые формы для 1 и 2 при женском роде (для тысяч)
+      if (lastTwo === 1) out.push(gender === "f" ? "одна" : "один");
+      else if (lastTwo === 2) out.push(gender === "f" ? "две" : "два");
+      else out.push(units[lastTwo]);
+    } else {
+      if (t) out.push(tens[t]);
+      if (u) {
+        if (u === 1) out.push(gender === "f" ? "одна" : "один");
+        else if (u === 2) out.push(gender === "f" ? "две" : "два");
+        else out.push(units[u]);
+      }
+    }
+    return out.join(" ");
+  }
+
+  const parts: string[] = [];
+  let classIndex = 0;
+  while (num > 0) {
+    const group = num % 1000;
+    if (group > 0) {
+      const cls = classes[classIndex] || ["", "", "", "m"];
+      const gender = cls[3];
+      const gw = threeDigitsToWords(group, gender);
+      const form = classForm(group, cls);
+      parts.unshift((gw + (form ? " " + form : "")).trim());
+    }
+    num = Math.floor(num / 1000);
+    classIndex++;
+  }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim();
 }
+
+
 
 function numberToWordsPenny(num: number): string {
     if (num < 0 || num > 99) {
@@ -112,14 +102,24 @@ function getRubleWord(integerPart: number): string {
     }
 
     const lastTwoDigits = integerPart % 100;
+    const lastOneDigits = integerPart % 10;
+    console.log(lastTwoDigits)
 
     // Определяем окончание для рублей
     if (lastTwoDigits === 1) {
         return "белорусский рубль";
     } else if (lastTwoDigits >= 2 && lastTwoDigits <= 4) {
         return "белорусских рубля";
+    } else if (lastTwoDigits >= 5 && lastTwoDigits <= 20) {
+        return "белорусских рублей";
+    } else{
+      if (lastOneDigits === 1) {
+        return "белорусский рубль";
+    } else if (lastOneDigits >= 2 && lastOneDigits <= 4) {
+        return "белорусских рубля";
     } else {
         return "белорусских рублей";
+    }
     }
 }
 
@@ -131,7 +131,7 @@ function formatCurrency(amount: number): string {
   const fractionalWords = numberToWordsPenny(fractionalPart);
 //   let kopeika = "";
   let ruble =  getRubleWord(integerPart);
-  console.log(integerWords)
+  // console.log(integerWords)
 
 
   return `${amount.toFixed(2)} (${integerWords} ${ruble} ${fractionalWords}) `;
@@ -147,12 +147,14 @@ document
 
     if (inputElement && outputElement) {
       const inputValue = parseFloat(inputElement.value);
+      // console.log(inputValue)
       if (!isNaN(inputValue)) {
         const formattedText = formatCurrency(inputValue);
-        // const nds = inputValue * 0.2;
-        // const formattedNdsText = formatCurrency(nds);
-        // outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
-        outputElement.textContent = `${formattedText}`;
+        const nds = inputValue *20/120;
+        //  console.log(nds)
+        const formattedNdsText = formatCurrency(nds);
+        outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
+        // outputElement.textContent = `${formattedText}`;
       } else {
         outputElement.textContent = "Пожалуйста, введите корректное число.";
       }
