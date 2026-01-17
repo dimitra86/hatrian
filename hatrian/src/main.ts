@@ -106,28 +106,33 @@ function numberToWordsPenny(num: number): string {
     }
 }
 
+function getRubleWord(integerPart: number): string {
+    if (integerPart < 0) {
+        throw new Error("Число должно быть неотрицательным");
+    }
+
+    const lastTwoDigits = integerPart % 100;
+
+    // Определяем окончание для рублей
+    if (lastTwoDigits === 1) {
+        return "белорусский рубль";
+    } else if (lastTwoDigits >= 2 && lastTwoDigits <= 4) {
+        return "белорусских рубля";
+    } else {
+        return "белорусских рублей";
+    }
+}
+
+
 function formatCurrency(amount: number): string {
   const integerPart = Math.floor(amount);
   const fractionalPart = Math.round((amount - integerPart) * 100);
   const integerWords = numberToWords(integerPart);
   const fractionalWords = numberToWordsPenny(fractionalPart);
 //   let kopeika = "";
-  let ruble = "";
-  console.log(fractionalWords)
+  let ruble =  getRubleWord(integerPart);
+  console.log(integerWords)
 
-  if (integerPart >= 5) {
-    ruble = "белорусских рублей";
-  }
-      if (integerPart > 1 && integerPart < 5) {
-    ruble = "белорусских рубля";
-  }
-
-    if (integerPart == 1) {
-    ruble = "белорусский рубль";
-  }
-  if (integerPart == 0) {
-    ruble = "белорусских рублей";
-  }
 
   return `${amount.toFixed(2)} (${integerWords} ${ruble} ${fractionalWords}) `;
 }
