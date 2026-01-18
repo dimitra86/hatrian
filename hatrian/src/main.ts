@@ -164,15 +164,21 @@ export function getRubleWord(integerPart: number): string {
 }
 
 export function formatCurrency(amount: number): string {
-  const integerPart = Math.floor(amount);
-  const fractionalPart = Math.round((amount - integerPart) * 100);
+  if (!Number.isFinite(amount)) throw new Error("Input must be a finite number");
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+  const integerPart = Math.floor(abs);
+  const fractionalPart = Math.round((abs - integerPart) * 100);
   const integerWords = numberToWords(integerPart);
   const fractionalWords = numberToWordsPenny(fractionalPart);
-  //   let kopeika = "";
-  let ruble = getRubleWord(integerPart);
-  // console.log(integerWords)
+  const ruble = getRubleWord(integerPart);
 
-  return `${amount.toFixed(2)} (${integerWords} ${ruble} ${fractionalWords}) `;
+  const formattedNumber = new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(abs); // будет с запятой
+
+  return `${sign}${formattedNumber} (${integerWords} ${ruble} ${fractionalWords})`;
 }
 
 document
@@ -183,20 +189,31 @@ document
     const outputElement =
       document.querySelector<HTMLDivElement>(".main__word-number");
 
-    if (inputElement && outputElement) {
-      const inputValue = parseFloat(inputElement.value);
-      // console.log(inputValue)
-      if (!isNaN(inputValue)) {
-        const formattedText = formatCurrency(inputValue);
-        const nds = (inputValue * 20) / 120;
-        //  console.log(nds)
-        const formattedNdsText = formatCurrency(nds);
-        outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
-        // outputElement.textContent = `${formattedText}`;
-      } else {
-        outputElement.textContent = "Пожалуйста, введите корректное число.";
-      }
+    if (!inputElement || !outputElement) return;
+
+    // парсим с учётом запятой
+    const raw = inputElement.value.trim();
+    const inputValue = raw === "" ? NaN : parseFloat(raw.replace(",", "."));
+    console.log(inputValue);
+
+    const MAX = 1_000_000_000_000; // 1 трлн
+    const MIN = 0;
+
+    if (Number.isNaN(inputValue)) {
+      outputElement.textContent = "Пожалуйста, введите корректное число.";
+      return;
     }
+
+    if (inputValue < MIN || inputValue > MAX) {
+      outputElement.textContent = `Пожалуйста, введите число от ${MIN.toLocaleString()} до ${MAX.toLocaleString()}.`;
+      return;
+    }
+
+    // допустимое значение — форматируем и показываем
+    const formattedText = formatCurrency(inputValue);
+    const nds = (inputValue * 20) / 120;
+    const formattedNdsText = formatCurrency(nds);
+    outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
   });
 
 document.querySelector(".main__copy-button")?.addEventListener("click", () => {
@@ -204,13 +221,7 @@ document.querySelector(".main__copy-button")?.addEventListener("click", () => {
     document.querySelector<HTMLDivElement>(".main__word-number");
 
   if (outputElement) {
-    navigator.clipboard.writeText(outputElement.textContent || "").then(
-      () => {
-        //   alert('Текст скопирован в буфер обмена!');
-      },
-      () => {
-        //   alert('Не удалось скопировать текст.');
-      },
-    );
+    navigator.clipboard.writeText(outputElement.textContent || "").catch(() => {
+          });
   }
 });
