@@ -1,17 +1,56 @@
 import "./style.scss";
 
-function numberToWords(num: number): string {
+export function numberToWords(num: number): string {
   if (!Number.isFinite(num)) throw new Error("Input must be a finite number");
   num = Math.floor(Math.abs(num));
   if (num === 0) return "ноль";
 
   const units = [
-    "", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять",
-    "десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать",
-    "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"
+    "",
+    "один",
+    "два",
+    "три",
+    "четыре",
+    "пять",
+    "шесть",
+    "семь",
+    "восемь",
+    "девять",
+    "десять",
+    "одиннадцать",
+    "двенадцать",
+    "тринадцать",
+    "четырнадцать",
+    "пятнадцать",
+    "шестнадцать",
+    "семнадцать",
+    "восемнадцать",
+    "девятнадцать",
   ];
-  const tens = ["", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"];
-  const hundreds = ["", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот"];
+  const tens = [
+    "",
+    "",
+    "двадцать",
+    "тридцать",
+    "сорок",
+    "пятьдесят",
+    "шестьдесят",
+    "семьдесят",
+    "восемьдесят",
+    "девяносто",
+  ];
+  const hundreds = [
+    "",
+    "сто",
+    "двести",
+    "триста",
+    "четыреста",
+    "пятьсот",
+    "шестьсот",
+    "семьсот",
+    "восемьсот",
+    "девятьсот",
+  ];
 
   // формы для классов (тысячи, миллионы, миллиарды, ...)
   // каждая запись: [forms for 1, 2-4, 5-0], gender ('m' или 'f')
@@ -20,10 +59,13 @@ function numberToWords(num: number): string {
     ["тысяча", "тысячи", "тысяч", "f"],
     ["миллион", "миллиона", "миллионов", "m"],
     ["миллиард", "миллиарда", "миллиардов", "m"],
-    ["триллион", "триллиона", "триллионов", "m"]
+    ["триллион", "триллиона", "триллионов", "m"],
   ];
 
-  function classForm(n: number, forms: [string, string, string, "m" | "f"]): string {
+  function classForm(
+    n: number,
+    forms: [string, string, string, "m" | "f"],
+  ): string {
     if (!forms[0]) return "";
     const lastTwo = n % 100;
     const last = n % 10;
@@ -74,65 +116,61 @@ function numberToWords(num: number): string {
   return parts.join(" ").replace(/\s+/g, " ").trim();
 }
 
+export function numberToWordsPenny(num: number): string {
+  if (num < 0 || num > 99) {
+    throw new Error("Number must be between 0 и 99");
+  }
 
+  // Форматируем число с ведущим нулем
+  const formattedNumber = num < 10 ? `0${num}` : `${num}`;
 
-function numberToWordsPenny(num: number): string {
-    if (num < 0 || num > 99) {
-        throw new Error("Number must be between 0 и 99");
-    }
-
-    // Форматируем число с ведущим нулем
-    const formattedNumber = num < 10 ? `0${num}` : `${num}`;
-
-    // Правильные окончания
-    if (num === 0) {
-        return `${formattedNumber} копеек`;
-    } else if (num % 10 === 1 && num !== 11) {
-        return `${formattedNumber} копейка`;
-    } else if (num % 10 >= 2 && num % 10 <= 4 && (num < 10 || num >= 20)) {
-        return `${formattedNumber} копейки`;
-    } else {
-        return `${formattedNumber} копеек`;
-    }
+  // Правильные окончания
+  if (num === 0) {
+    return `${formattedNumber} копеек`;
+  } else if (num % 10 === 1 && num !== 11) {
+    return `${formattedNumber} копейка`;
+  } else if (num % 10 >= 2 && num % 10 <= 4 && (num < 10 || num >= 20)) {
+    return `${formattedNumber} копейки`;
+  } else {
+    return `${formattedNumber} копеек`;
+  }
 }
 
-function getRubleWord(integerPart: number): string {
-    if (integerPart < 0) {
-        throw new Error("Число должно быть неотрицательным");
-    }
+export function getRubleWord(integerPart: number): string {
+  if (integerPart < 0) {
+    throw new Error("Число должно быть неотрицательным");
+  }
 
-    const lastTwoDigits = integerPart % 100;
-    const lastOneDigits = integerPart % 10;
-    console.log(lastTwoDigits)
+  const lastTwoDigits = integerPart % 100;
+  const lastOneDigits = integerPart % 10;
+  
 
-    // Определяем окончание для рублей
-    if (lastTwoDigits === 1) {
-        return "белорусский рубль";
-    } else if (lastTwoDigits >= 2 && lastTwoDigits <= 4) {
-        return "белорусских рубля";
-    } else if (lastTwoDigits >= 5 && lastTwoDigits <= 20) {
-        return "белорусских рублей";
-    } else{
-      if (lastOneDigits === 1) {
-        return "белорусский рубль";
+  // Определяем окончание для рублей
+  if (lastTwoDigits === 1) {
+    return "белорусский рубль";
+  } else if (lastTwoDigits >= 2 && lastTwoDigits <= 4) {
+    return "белорусских рубля";
+  } else if (lastTwoDigits >= 5 && lastTwoDigits <= 20) {
+    return "белорусских рублей";
+  } else {
+    if (lastOneDigits === 1) {
+      return "белорусский рубль";
     } else if (lastOneDigits >= 2 && lastOneDigits <= 4) {
-        return "белорусских рубля";
+      return "белорусских рубля";
     } else {
-        return "белорусских рублей";
+      return "белорусских рублей";
     }
-    }
+  }
 }
 
-
-function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number): string {
   const integerPart = Math.floor(amount);
   const fractionalPart = Math.round((amount - integerPart) * 100);
   const integerWords = numberToWords(integerPart);
   const fractionalWords = numberToWordsPenny(fractionalPart);
-//   let kopeika = "";
-  let ruble =  getRubleWord(integerPart);
+  //   let kopeika = "";
+  let ruble = getRubleWord(integerPart);
   // console.log(integerWords)
-
 
   return `${amount.toFixed(2)} (${integerWords} ${ruble} ${fractionalWords}) `;
 }
@@ -150,7 +188,7 @@ document
       // console.log(inputValue)
       if (!isNaN(inputValue)) {
         const formattedText = formatCurrency(inputValue);
-        const nds = inputValue *20/120;
+        const nds = (inputValue * 20) / 120;
         //  console.log(nds)
         const formattedNdsText = formatCurrency(nds);
         outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
