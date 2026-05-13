@@ -52,10 +52,8 @@ export function numberToWords(num: number): string {
     "девятьсот",
   ];
 
-  // формы для классов (тысячи, миллионы, миллиарды, ...)
-  // каждая запись: [forms for 1, 2-4, 5-0], gender ('m' или 'f')
   const classes: Array<[string, string, string, "m" | "f"]> = [
-    ["", "", "", "m"], // единицы
+    ["", "", "", "m"],
     ["тысяча", "тысячи", "тысяч", "f"],
     ["миллион", "миллиона", "миллионов", "m"],
     ["миллиард", "миллиарда", "миллиардов", "m"],
@@ -83,7 +81,6 @@ export function numberToWords(num: number): string {
     if (h) out.push(hundreds[h]);
     const lastTwo = n % 100;
     if (lastTwo > 0 && lastTwo < 20) {
-      // особые формы для 1 и 2 при женском роде (для тысяч)
       if (lastTwo === 1) out.push(gender === "f" ? "одна" : "один");
       else if (lastTwo === 2) out.push(gender === "f" ? "две" : "два");
       else out.push(units[lastTwo]);
@@ -120,11 +117,7 @@ export function numberToWordsPenny(num: number): string {
   if (num < 0 || num > 99) {
     throw new Error("Number must be between 0 и 99");
   }
-
-  // Форматируем число с ведущим нулем
   const formattedNumber = num < 10 ? `0${num}` : `${num}`;
-
-  // Правильные окончания
   if (num === 0) {
     return `${formattedNumber} копеек`;
   } else if (num % 10 === 1 && num !== 11) {
@@ -140,12 +133,9 @@ export function getRubleWord(integerPart: number): string {
   if (integerPart < 0) {
     throw new Error("Число должно быть неотрицательным");
   }
-
   const lastTwoDigits = integerPart % 100;
   const lastOneDigits = integerPart % 10;
-  
 
-  // Определяем окончание для рублей
   if (lastTwoDigits === 1) {
     return "белорусский рубль";
   } else if (lastTwoDigits >= 2 && lastTwoDigits <= 4) {
@@ -173,55 +163,89 @@ export function formatCurrency(amount: number): string {
   const fractionalWords = numberToWordsPenny(fractionalPart);
   const ruble = getRubleWord(integerPart);
 
-  const formattedNumber = new Intl.NumberFormat('ru-RU', {
+  const formattedNumber = new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(abs); // будет с запятой
+  }).format(abs);
 
   return `${sign}${formattedNumber} (${integerWords} ${ruble} ${fractionalWords})`;
 }
 
-document
-  .querySelector(".main__change-button")
-  ?.addEventListener("click", () => {
-    const inputElement =
-      document.querySelector<HTMLInputElement>(".main__past-number");
-    const outputElement =
-      document.querySelector<HTMLDivElement>(".main__word-number");
+/* ---------- UI logic: очистка ввода + обработчики кнопок ---------- */
 
-    if (!inputElement || !outputElement) return;
+const inputSelector = ".main__past-number";
+const outputSelector = ".main__word-number";
+const changeBtnSelector = ".main__change-button";
+const copyBtnSelector = ".main__copy-button";
 
-    // парсим с учётом запятой
-    const raw = inputElement.value.trim();
-    const inputValue = raw === "" ? NaN : parseFloat(raw.replace(",", "."));
-    console.log(inputValue);
+const inputElement = document.querySelector<HTMLInputElement>(inputSelector);
+// const outputElement = document.querySelector<HTMLDivElement>(outputSelector);
 
-    const MAX = 1_000_000_000_000; // 1 трлн
-    const MIN = 0;
-
-    if (Number.isNaN(inputValue)) {
-      outputElement.textContent = "Пожалуйста, введите корректное число.";
-      return;
+// realtime очистка: только цифры и одна точка/запятая, плюс удаление всех пробельных/невидимых символов
+if (inputElement) {
+  inputElement.addEventListener("input", () => {
+    const old = inputElement.value;
+    let v = old.replace(/[\s\uFEFF\u00A0\u200B]+/g, "").replace(/[^0-9.,]+/g, "");
+    const firstSep = v.search(/[.,]/);
+    if (firstSep !== -1) {
+      v = v.slice(0, firstSep + 1) + v.slice(firstSep + 1).replace(/[.,]/g, "");
     }
-
-    if (inputValue < MIN || inputValue > MAX) {
-      outputElement.textContent = `Пожалуйста, введите число от ${MIN.toLocaleString()} до ${MAX.toLocaleString()}.`;
-      return;
+    if (v !== old) {
+      const pos = inputElement.selectionStart ?? v.length;
+      inputElement.value = v;
+      const newPos = Math.min(v.length, Math.max(0, pos - (old.length - v.length)));
+      inputElement.setSelectionRange(newPos, newPos);
     }
-
-    // допустимое значение — форматируем и показываем
-    const formattedText = formatCurrency(inputValue);
-    const nds = (inputValue * 20) / 120;
-    const formattedNdsText = formatCurrency(nds);
-    outputElement.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
   });
 
-document.querySelector(".main__copy-button")?.addEventListener("click", () => {
-  const outputElement =
-    document.querySelector<HTMLDivElement>(".main__word-number");
+  // опционально блокируем пробел на keydown (предотвращает ввод пробела)
+  inputElement.addEventListener("keydown", (e) => {
+    if (e.key === " ") e.preventDefault();
+  });
+}
 
-  if (outputElement) {
-    navigator.clipboard.writeText(outputElement.textContent || "").catch(() => {
-          });
+document.querySelector(changeBtnSelector)?.addEventListener("click", () => {
+  const inEl = document.querySelector<HTMLInputElement>(inputSelector);
+  const outEl = document.querySelector<HTMLDivElement>(outputSelector);
+  if (!inEl || !outEl) return;
+
+  const rawInput = inEl.value || "";
+
+  // Ищем первую подстроку: числа, опционально разделитель и дробная часть
+  const match = rawInput.match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) {
+    outEl.textContent = "Пожалуйста, введите корректное число.";
+    return;
   }
+
+  const candidate = match[1].replace(",", ".");
+  const inputValue = parseFloat(candidate);
+
+  // console.log("rawInput:", JSON.stringify(rawInput));
+  // console.log("candidate:", JSON.stringify(candidate));
+  // console.log("parsed:", inputValue);
+
+  const MAX = 1_000_000_000_000;
+  const MIN = 0;
+
+  if (!Number.isFinite(inputValue) || Number.isNaN(inputValue)) {
+    outEl.textContent = "Пожалуйста, введите корректное число.";
+    return;
+  }
+
+  if (inputValue < MIN || inputValue > MAX) {
+    outEl.textContent = `Пожалуйста, введите число от ${MIN.toLocaleString()} до ${MAX.toLocaleString()}.`;
+    return;
+  }
+
+  const formattedText = formatCurrency(inputValue);
+  const nds = (inputValue * 20) / 120;
+  const formattedNdsText = formatCurrency(nds);
+  outEl.textContent = `${formattedText}, в т.ч. НДС 20% ${formattedNdsText}`;
+});
+
+document.querySelector(copyBtnSelector)?.addEventListener("click", () => {
+  const outEl = document.querySelector<HTMLDivElement>(outputSelector);
+  if (!outEl) return;
+  navigator.clipboard.writeText(outEl.textContent || "").catch(() => {});
 });
