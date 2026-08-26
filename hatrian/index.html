@@ -1,33 +1,34 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico" />
-    <title>hatrian</title>
-  </head>
 
-  <body>
-    <section class="main">
-      <div class="main__wrapper">
-        <h1 class="main__title">hatrian</h1>
-        <div class="main__past">
-          <!-- <label for="number">Enter your number: </label> -->
-          <input
-            class="main__past-number"
-            type="text"
-min="0" max="1000000000" step="1" 
-            placeholder="Enter number"
-          />
-          <!-- <div class="main__past-number" type="text">150</div> -->
-          <button class="main__change-button">Change</button>
-        </div>
-        <div class="main__word">
-          <div class="main__word-number"></div>
-          <button class="main__copy-button">Copy</button>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="./assets/favicon.ico" />
+  <title>hatrian</title>
+</head>
+
+<body>
+  <section class="main">
+    <div class="main__wrapper">
+      <h1 class="main__title">hatrian</h1>
+      <div class="main__past">
+        <!-- <label for="number">Enter your number: </label> -->
+        <input class="main__past-number" type="text" min="0" max="1000000000" step="1" placeholder="Enter number" />
+        <!-- <div class="main__past-number" type="text">150</div> -->
+        <button class="main__change-button">Change</button>
       </div>
-    </section>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+      <div class="main__word">
+        <div class="main__word-number"></div>
+        <button class="main__copy-button">Copy</button>
+        <input type="checkbox" id="nds" name="nds" checked>
+        <label for="vehicle1"> NDS</label><br>
+      </div>
+
+    </div>
+    </div>
+  </section>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
